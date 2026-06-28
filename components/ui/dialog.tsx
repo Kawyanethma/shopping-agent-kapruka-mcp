@@ -4,6 +4,7 @@ import * as React from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// ─── Context ──────────────────────────────────────────────────────────────────
 interface DialogContextValue {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -14,13 +15,12 @@ const DialogContext = React.createContext<DialogContextValue | undefined>(
 );
 
 function useDialogContext() {
-  const context = React.useContext(DialogContext);
-  if (!context) {
-    throw new Error("Dialog components must be used within a Dialog element");
-  }
-  return context;
+  const ctx = React.useContext(DialogContext);
+  if (!ctx) throw new Error("Dialog components must be used inside <Dialog>");
+  return ctx;
 }
 
+// ─── Root ─────────────────────────────────────────────────────────────────────
 interface DialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -38,9 +38,7 @@ const Dialog = React.forwardRef<HTMLDivElement, DialogProps>(
     const isOpen =
       controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
     const setOpen = (value: boolean) => {
-      if (controlledOpen === undefined) {
-        setUncontrolledOpen(value);
-      }
+      if (controlledOpen === undefined) setUncontrolledOpen(value);
       onOpenChange?.(value);
     };
 
@@ -53,12 +51,12 @@ const Dialog = React.forwardRef<HTMLDivElement, DialogProps>(
 );
 Dialog.displayName = "Dialog";
 
+// ─── Trigger ──────────────────────────────────────────────────────────────────
 const DialogTrigger = React.forwardRef<
   HTMLButtonElement,
   React.ButtonHTMLAttributes<HTMLButtonElement>
 >(({ onClick, ...props }, ref) => {
   const { onOpenChange } = useDialogContext();
-
   return (
     <button
       ref={ref}
@@ -72,28 +70,26 @@ const DialogTrigger = React.forwardRef<
 });
 DialogTrigger.displayName = "DialogTrigger";
 
+// ─── Portal (conditional render) ──────────────────────────────────────────────
 const DialogPortal = ({ children }: { children: React.ReactNode }) => {
   const { open } = useDialogContext();
-
-  if (!open) {
-    return null;
-  }
-
+  if (!open) return null;
   return <>{children}</>;
 };
 DialogPortal.displayName = "DialogPortal";
 
+// ─── Overlay ──────────────────────────────────────────────────────────────────
 const DialogOverlay = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, onClick, ...props }, ref) => {
   const { onOpenChange } = useDialogContext();
-
   return (
     <div
       ref={ref}
       className={cn(
-        "fixed inset-0 z-50 bg-black/80 animate-in fade-in-0",
+        // Uses theme tokens — no hardcoded colours
+        "fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm animate-in fade-in-0",
         className,
       )}
       onClick={(e) => {
@@ -106,6 +102,7 @@ const DialogOverlay = React.forwardRef<
 });
 DialogOverlay.displayName = "DialogOverlay";
 
+// ─── Content ──────────────────────────────────────────────────────────────────
 const DialogContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -113,14 +110,11 @@ const DialogContent = React.forwardRef<
   const { onOpenChange } = useDialogContext();
 
   React.useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onOpenChange(false);
-      }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onOpenChange(false);
     };
-
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, [onOpenChange]);
 
   return (
@@ -129,19 +123,29 @@ const DialogContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-slate-200 bg-white p-6 shadow-lg animate-in fade-in-0 zoom-in-95 slide-in-from-left-1/2 slide-in-from-top-[48%] sm:rounded-lg dark:border-slate-800 dark:bg-slate-950 max-h-[90vh] overflow-y-auto",
+          // All colours come from CSS variables → respect the user's theme
+          "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2",
+          "bg-card text-card-foreground border border-border shadow-xl",
+          "rounded-xl max-h-[90vh] overflow-y-auto",
+          "animate-in fade-in-0 zoom-in-95 slide-in-from-left-1/2 slide-in-from-top-[48%]",
           className,
         )}
         onClick={(e) => e.stopPropagation()}
         {...props}
       >
         {children}
+
+        {/* Close button — themed */}
         <button
           onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:pointer-events-none dark:ring-offset-slate-950 dark:focus:ring-slate-300"
+          className={cn(
+            "absolute right-4 top-4 rounded-md p-1",
+            "text-muted-foreground hover:text-foreground hover:bg-muted",
+            "transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          )}
+          aria-label="Close"
         >
           <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
         </button>
       </div>
     </DialogPortal>
@@ -149,15 +153,13 @@ const DialogContent = React.forwardRef<
 });
 DialogContent.displayName = "DialogContent";
 
+// ─── Sub-components ───────────────────────────────────────────────────────────
 const DialogHeader = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn(
-      "flex flex-col space-y-1.5 text-center sm:text-left",
-      className,
-    )}
+    className={cn("flex flex-col gap-1.5 text-left", className)}
     {...props}
   />
 );
@@ -169,7 +171,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
       className,
     )}
     {...props}
@@ -184,7 +186,7 @@ const DialogTitle = React.forwardRef<
   <h2
     ref={ref}
     className={cn(
-      "text-lg font-semibold leading-none tracking-tight",
+      "text-lg font-semibold leading-none tracking-tight text-foreground",
       className,
     )}
     {...props}
@@ -198,7 +200,8 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-slate-500 dark:text-slate-400", className)}
+    // Uses theme muted-foreground — adapts to light and dark automatically
+    className={cn("text-sm text-muted-foreground", className)}
     {...props}
   />
 ));
@@ -209,7 +212,6 @@ const DialogClose = React.forwardRef<
   React.ButtonHTMLAttributes<HTMLButtonElement>
 >(({ onClick, ...props }, ref) => {
   const { onOpenChange } = useDialogContext();
-
   return (
     <button
       ref={ref}

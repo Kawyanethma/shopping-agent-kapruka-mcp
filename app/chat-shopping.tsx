@@ -8,22 +8,31 @@ import { Separator } from "@/components/ui/separator";
 import { ProductCard, type Product } from "@/components/ProductCard";
 import { ProductDetailsModal } from "@/components/ProductDetailsModal";
 import { ThemeToggle } from "@/components/theme-toggle";
+// lucide-react — icons without animated versions
 import {
-  Send,
-  Loader2,
-  ShoppingCart,
   Package,
-  MapPin,
   Tag,
-  Search,
-  Bot,
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Clock,
-  Truck,
-  Zap,
+  Loader2,
+  Send,
 } from "lucide-react";
+// lucide-animated icons
+import { BotIcon } from "@/components/ui/bot";
+import { SendIcon } from "@/components/ui/send";
+import { SearchIcon } from "@/components/ui/search";
+import { ZapIcon } from "@/components/ui/zap";
+import { TruckIcon } from "@/components/ui/truck";
+import { MapPinIcon } from "@/components/ui/map-pin";
+import { ClockIcon } from "@/components/ui/clock";
+import { LoaderCircleIcon } from "@/components/ui/loader-circle";
+import { OrderFormDialog } from "@/components/order/OrderFormDialog";
+import { ChatOrderForm } from "@/components/order/ChatOrderForm";
+import { OrderConfirmationCard } from "@/components/order/OrderConfirmationCard";
+import type { OrderResult } from "@/components/order/types";
+import { GithubIcon } from "@/components/ui/github";
+import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type GeminiHistory = { role: "user" | "model"; parts: { text: string }[] };
@@ -35,6 +44,9 @@ type ChatMessage = {
   content: string;
   products?: Product[];
   toolResults?: ToolResult[];
+  orderResult?: OrderResult;
+  /** Inline chat order form — product being ordered */
+  chatOrderProduct?: Product;
   isLoading?: boolean;
 };
 
@@ -65,7 +77,7 @@ const DeliveryCard = memo(function DeliveryCard({
     >
       <CardContent className="pt-4 pb-3 space-y-2">
         <div className="flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-muted-foreground" />
+          <MapPinIcon size={16} className="text-muted-foreground" />
           <span className="font-semibold">{city}</span>
           <Badge
             variant={available ? "default" : "destructive"}
@@ -85,14 +97,14 @@ const DeliveryCard = memo(function DeliveryCard({
         {available && (
           <>
             <div className="text-sm text-muted-foreground flex items-center gap-1.5">
-              <Truck className="w-3.5 h-3.5" />
+              <TruckIcon size={14} />
               Flat delivery rate:{" "}
               <span className="font-medium text-foreground">
                 LKR {rate.toLocaleString()}
               </span>
             </div>
             <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="w-3 h-3" /> Checked for {date}
+              <ClockIcon size={12} /> Checked for {date}
             </div>
           </>
         )}
@@ -103,7 +115,7 @@ const DeliveryCard = memo(function DeliveryCard({
         )}
         {!available && nextDate && (
           <p className="text-sm text-muted-foreground flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 shrink-0" /> Next available:{" "}
+            <ClockIcon size={14} className="shrink-0" /> Next available:{" "}
             <strong>{nextDate}</strong>
           </p>
         )}
@@ -166,7 +178,7 @@ const CitiesList = memo(function CitiesList({
     <Card>
       <CardContent className="pt-4 pb-3">
         <div className="flex items-center gap-2 mb-3">
-          <MapPin className="w-4 h-4 text-primary" />
+          <MapPinIcon size={16} className="text-primary" />
           <span className="font-semibold">Delivery Cities</span>
           <Badge variant="secondary" className="ml-auto">
             {total} total
@@ -271,11 +283,17 @@ const OrderCard = memo(function OrderCard({
 const MessageRow = memo(function MessageRow({
   msg,
   onViewProduct,
-  onAddToCart,
+  onOrderNow,
+  onOrderInChat,
+  onChatOrderCreated,
+  onDismissChatOrder,
 }: {
   msg: ChatMessage;
   onViewProduct: (p: Product) => void;
-  onAddToCart: (p: Product) => void;
+  onOrderNow: (p: Product) => void;
+  onOrderInChat: (p: Product) => void;
+  onChatOrderCreated: (result: OrderResult, msgId: string) => void;
+  onDismissChatOrder: (msgId: string) => void;
 }) {
   return (
     <div className="space-y-3">
@@ -286,7 +304,7 @@ const MessageRow = memo(function MessageRow({
         >
           {msg.role === "assistant" && (
             <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-              <Bot className="w-3.5 h-3.5 text-primary" />
+              <BotIcon size={14} className="text-primary" />
             </div>
           )}
           <div
@@ -298,7 +316,7 @@ const MessageRow = memo(function MessageRow({
           >
             {msg.isLoading ? (
               <span className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <LoaderCircleIcon size={14} className="animate-spin" />
                 Thinking…
               </span>
             ) : (
@@ -334,19 +352,37 @@ const MessageRow = memo(function MessageRow({
         <div className="pl-9 space-y-2">
           <p className="text-xs text-muted-foreground">
             {msg.products.length} product{msg.products.length !== 1 ? "s" : ""}{" "}
-            found · tap to view or add to cart
+            found
           </p>
-          {/* NOTE: plain div – not inside ScrollArea – so clicks work */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {msg.products.map((p) => (
               <ProductCard
                 key={p.id}
                 product={p}
                 onViewDetails={onViewProduct}
-                onAddToCart={onAddToCart}
+                onOrderNow={onOrderNow}
+                onOrderInChat={onOrderInChat}
               />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Inline chat order form */}
+      {!msg.isLoading && msg.chatOrderProduct && (
+        <div className="pl-9">
+          <ChatOrderForm
+            product={msg.chatOrderProduct}
+            onOrderCreated={(result) => onChatOrderCreated(result, msg.id)}
+            onDismiss={() => onDismissChatOrder(msg.id)}
+          />
+        </div>
+      )}
+
+      {/* Order confirmation */}
+      {!msg.isLoading && msg.orderResult && (
+        <div className="pl-9">
+          <OrderConfirmationCard result={msg.orderResult} />
         </div>
       )}
     </div>
@@ -423,37 +459,37 @@ const ChatInput = memo(function ChatInput({
 // ─── Quick actions – call MCP directly (no Gemini, no API credits) ────────────
 const QUICK_ACTIONS = [
   {
-    icon: <Search className="w-3.5 h-3.5" />,
+    icon: <SearchIcon size={14} />,
     label: "Birthday cakes",
     toolName: "kapruka_search_products",
     params: { q: "birthday cake", limit: 12 },
   },
   {
-    icon: <Search className="w-3.5 h-3.5" />,
+    icon: <SearchIcon size={14} />,
     label: "Flowers",
     toolName: "kapruka_search_products",
     params: { q: "flowers", limit: 12 },
   },
   {
-    icon: <Search className="w-3.5 h-3.5" />,
+    icon: <SearchIcon size={14} />,
     label: "Chocolates",
     toolName: "kapruka_search_products",
     params: { q: "chocolates", limit: 12 },
   },
   {
-    icon: <Tag className="w-3.5 h-3.5" />,
+    icon: <Tag className="w-3.5 h-3.5" />, // no animated version installed
     label: "Categories",
     toolName: "kapruka_list_categories",
     params: { depth: 2 },
   },
   {
-    icon: <MapPin className="w-3.5 h-3.5" />,
+    icon: <MapPinIcon size={14} />,
     label: "Delivery cities",
     toolName: "kapruka_list_delivery_cities",
     params: { limit: 25 },
   },
   {
-    icon: <MapPin className="w-3.5 h-3.5" />,
+    icon: <MapPinIcon size={14} />,
     label: "Colombo delivery",
     toolName: "kapruka_check_delivery",
     params: { city: "Colombo 03" },
@@ -478,9 +514,12 @@ export function ChatShoppingPage() {
   ]);
   const [geminiHistory, setGeminiHistory] = useState<GeminiHistory[]>([]);
   const [loading, setLoading] = useState(false);
+  // Details modal
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
+  // Order modal
+  const [orderProduct, setOrderProduct] = useState<Product | null>(null);
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -489,21 +528,65 @@ export function ChatShoppingPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleAddToCart = useCallback((product: Product) => {
-    setCartCount((n) => n + 1);
+  const handleViewProduct = useCallback((p: Product) => {
+    setSelectedProduct(p);
+    setDetailsOpen(true);
+  }, []);
+
+  const handleOrderNow = useCallback((p: Product) => {
+    setOrderProduct(p);
+    setOrderModalOpen(true);
+  }, []);
+
+  // Called when the dialog's order is created
+  const handleOrderCreated = useCallback((result: OrderResult) => {
     setMessages((prev) => [
       ...prev,
       {
         id: uid(),
         role: "assistant",
-        content: `Added "${product.name}" to your cart. (LKR ${product.price.amount.toLocaleString()})`,
+        content: `Order created — ref ${result.order_ref}. Complete your payment below.`,
+        orderResult: result,
       },
     ]);
   }, []);
 
-  const handleViewProduct = useCallback((p: Product) => {
-    setSelectedProduct(p);
-    setDetailsOpen(true);
+  // "Order in Chat" — inserts an inline form card into the conversation
+  const handleOrderInChat = useCallback((p: Product) => {
+    setMessages((prev) => [
+      ...prev,
+      { id: uid(), role: "user", content: `I want to order: ${p.name}` },
+      {
+        id: uid(),
+        role: "assistant",
+        content:
+          "Sure! Fill in the delivery details below and I’ll create an order for you.",
+        chatOrderProduct: p,
+      },
+    ]);
+  }, []);
+
+  // Replace the chat order form with a confirmation card once created
+  const handleChatOrderCreated = useCallback(
+    (result: OrderResult, msgId: string) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId
+            ? { ...m, chatOrderProduct: undefined, orderResult: result }
+            : m,
+        ),
+      );
+    },
+    [],
+  );
+
+  // Dismiss an inline chat order form
+  const handleDismissChatOrder = useCallback((msgId: string) => {
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === msgId ? { ...m, chatOrderProduct: undefined } : m,
+      ),
+    );
   }, []);
 
   // ── Gemini-powered send (user typed messages) ─────────────────────────────
@@ -674,7 +757,7 @@ export function ChatShoppingPage() {
       <header className="border-b shrink-0 bg-background/95 backdrop-blur z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-primary" />
+            <ZapIcon size={20} className="text-primary" />
             <div>
               <p className="text-sm font-bold leading-none">K-Shopping Agent</p>
               <p className="text-[10px] text-muted-foreground leading-none mt-0.5">
@@ -683,13 +766,15 @@ export function ChatShoppingPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {cartCount > 0 && (
-              <Badge variant="outline" className="gap-1">
-                <ShoppingCart className="w-3.5 h-3.5" />
-                {cartCount}
-              </Badge>
-            )}
             <ThemeToggle />
+            <Link
+              href="https://github.com/Kawyanethma/shopping-agent-kapruka-mcp"
+              className="text-sm text-muted-foreground hover:text-primary"
+            >
+              <Button variant="ghost">
+                <GithubIcon />
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -704,7 +789,10 @@ export function ChatShoppingPage() {
               key={msg.id}
               msg={msg}
               onViewProduct={handleViewProduct}
-              onAddToCart={handleAddToCart}
+              onOrderNow={handleOrderNow}
+              onOrderInChat={handleOrderInChat}
+              onChatOrderCreated={handleChatOrderCreated}
+              onDismissChatOrder={handleDismissChatOrder}
             />
           ))}
           <div ref={messagesEndRef} />
@@ -741,10 +829,22 @@ export function ChatShoppingPage() {
         product={selectedProduct}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
-        onAddToCart={(prod) => {
-          handleAddToCart(prod);
+        onOrderNow={(prod) => {
           setDetailsOpen(false);
+          handleOrderNow(prod);
         }}
+        onOrderInChat={(prod) => {
+          setDetailsOpen(false);
+          handleOrderInChat(prod);
+        }}
+      />
+
+      {/* ── Order dialog ── */}
+      <OrderFormDialog
+        product={orderProduct}
+        open={orderModalOpen}
+        onOpenChange={setOrderModalOpen}
+        onOrderCreated={handleOrderCreated}
       />
     </div>
   );

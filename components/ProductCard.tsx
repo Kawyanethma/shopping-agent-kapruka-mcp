@@ -3,35 +3,27 @@
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Heart } from "lucide-react";
+import { EyeIcon } from "@/components/ui/eye";
+import { MessageSquareIcon } from "@/components/ui/message-square";
+import { ShoppingBag, ExternalLink } from "lucide-react";
 
 export type Product = {
   id: string;
   name: string;
   summary: string;
-  price: {
-    amount: number;
-    currency: string;
-  };
-  compare_at_price?: {
-    amount: number;
-    currency: string;
-  } | null;
+  price: { amount: number; currency: string };
+  compare_at_price?: { amount: number; currency: string } | null;
   in_stock: boolean;
   stock_level: string;
   image_url: string | null;
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-  };
+  category: { id: string; name: string; slug: string };
   ships_internationally: boolean;
   url: string;
   rating?: number | null;
@@ -39,13 +31,30 @@ export type Product = {
 
 type ProductCardProps = {
   product: Product;
-  onAddToCart?: (product: Product) => void;
+  onOrderNow?: (product: Product) => void;
+  onOrderInChat?: (product: Product) => void;
   onViewDetails?: (product: Product) => void;
+};
+
+const stockBadge: Record<string, { label: string; cls: string }> = {
+  low: {
+    label: "Low Stock",
+    cls: "bg-orange-50 text-orange-700 border-orange-200",
+  },
+  medium: {
+    label: "In Stock",
+    cls: "bg-green-50  text-green-700  border-green-200",
+  },
+  high: {
+    label: "In Stock",
+    cls: "bg-green-50  text-green-700  border-green-200",
+  },
 };
 
 export function ProductCard({
   product,
-  onAddToCart,
+  onOrderNow,
+  onOrderInChat,
   onViewDetails,
 }: ProductCardProps) {
   const discount = product.compare_at_price
@@ -56,17 +65,15 @@ export function ProductCard({
       )
     : null;
 
-  const stockColor =
-    {
-      low: "bg-orange-100 text-orange-800",
-      medium: "bg-blue-100 text-blue-800",
-      high: "bg-green-100 text-green-800",
-    }[product.stock_level] || "bg-gray-100 text-gray-800";
+  const badge = stockBadge[product.stock_level] ?? {
+    label: "Unknown",
+    cls: "bg-gray-50 text-gray-700 border-gray-200",
+  };
 
   return (
-    <Card className="h-full flex flex-col overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      {/* Image Container */}
-      <div className="relative w-full bg-gray-100 aspect-square overflow-hidden">
+    <Card className="flex flex-col overflow-hidden hover:shadow-md transition-shadow duration-200">
+      {/* ── Image — fixed height so all cards align ── */}
+      <div className="relative w-full h-44 shrink-0 overflow-hidden bg-muted">
         {product.image_url ? (
           <img
             src={product.image_url}
@@ -74,88 +81,113 @@ export function ProductCard({
             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
-            <span className="text-gray-400 text-sm">No image</span>
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+            No image
           </div>
         )}
 
-        {/* Discount Badge */}
+        {/* Discount */}
         {discount && (
-          <Badge className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white">
+          <Badge className="absolute top-2 right-2 bg-destructive hover:bg-destructive text-destructive-foreground text-[10px] px-1.5">
             -{discount}%
           </Badge>
         )}
 
-        {/* Stock Badge */}
-        <Badge className={`absolute bottom-3 left-3 ${stockColor}`}>
-          {product.stock_level === "low" && "Low Stock"}
-          {product.stock_level === "medium" && "In Stock"}
-          {product.stock_level === "high" && "In Stock"}
-        </Badge>
-
-        {/* Wishlist Button */}
-        <button className="absolute top-3 left-3 p-2 bg-white rounded-full shadow hover:bg-gray-100 transition-colors">
-          <Heart className="w-4 h-4 text-gray-600" />
-        </button>
+        {/* View on site shortcut */}
+        <a
+          href={product.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-2 left-2 p-1.5 rounded-lg bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-colors"
+          title="View on Kapruka.com"
+        >
+          <ExternalLink className="w-3 h-3 text-foreground" />
+        </a>
       </div>
 
-      {/* Content */}
-      <CardHeader className="flex-none pb-3">
-        <CardDescription className="text-xs font-medium text-primary mb-1">
+      {/* ── Content ── */}
+      <CardHeader className="px-3 pt-3 pb-0">
+        <CardDescription className="text-[10px] font-semibold text-primary uppercase tracking-wide">
           {product.category.name}
         </CardDescription>
-        <CardTitle className="line-clamp-2 text-base leading-snug">
+        <CardTitle className="line-clamp-2 text-sm font-semibold leading-snug mt-0.5">
           {product.name}
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="flex-none">
-        <p className="text-xs text-gray-600 line-clamp-2">{product.summary}</p>
-
-        {/* Price Section */}
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-lg font-bold text-primary">
+      <CardContent className="px-3 pt-2 pb-0 flex-1">
+        {/* Price */}
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-base font-bold text-primary">
             {product.price.currency}{" "}
             {product.price.amount.toLocaleString("en-US", {
-              maximumFractionDigits: 2,
+              maximumFractionDigits: 0,
             })}
           </span>
           {product.compare_at_price && (
-            <span className="text-sm text-gray-500 line-through">
+            <span className="text-xs text-muted-foreground line-through">
               {product.compare_at_price.amount.toLocaleString("en-US", {
-                maximumFractionDigits: 2,
+                maximumFractionDigits: 0,
               })}
             </span>
           )}
         </div>
 
-        {/* International Shipping */}
-        {product.ships_internationally && (
-          <div className="mt-2 text-xs text-green-600 font-medium">
-            ✓ Ships Internationally
-          </div>
-        )}
+        {/* Badges */}
+        <div className="flex flex-wrap gap-1 mt-1.5">
+          <Badge
+            variant="outline"
+            className={`text-[10px] px-1.5 ${badge.cls}`}
+          >
+            {badge.label}
+          </Badge>
+          {product.ships_internationally && (
+            <Badge
+              variant="outline"
+              className="text-[10px] px-1.5 bg-blue-50 text-blue-700 border-blue-200"
+            >
+              Ships int&apos;l
+            </Badge>
+          )}
+        </div>
       </CardContent>
 
-      {/* Footer Actions */}
-      <CardFooter className="flex-none gap-2 mt-auto pt-3">
+      {/* ── Actions ── */}
+      <CardFooter className="px-3 pt-3 pb-3 flex-col gap-1.5">
+        {/* View details */}
         <Button
           size="sm"
           variant="outline"
-          className="flex-1"
+          className="w-full gap-1.5 text-xs h-8"
           onClick={() => onViewDetails?.(product)}
         >
+          <EyeIcon size={14} />
           View Details
         </Button>
-        <Button
-          size="sm"
-          className="flex-1 gap-1"
-          disabled={!product.in_stock}
-          onClick={() => onAddToCart?.(product)}
-        >
-          <ShoppingCart className="w-3 h-3" />
-          {product.in_stock ? "Add" : "Out of Stock"}
-        </Button>
+
+        {/* Order options */}
+        <div className="flex gap-1.5 w-full">
+          <Button
+            size="sm"
+            className="flex-1 gap-1 text-xs h-8"
+            disabled={!product.in_stock}
+            onClick={() => onOrderNow?.(product)}
+          >
+            <ShoppingBag className="w-3.5 h-3.5" />
+            Order
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1 gap-1 text-xs h-8"
+            disabled={!product.in_stock}
+            onClick={() => onOrderInChat?.(product)}
+          >
+            <MessageSquareIcon size={14} />
+            In Chat
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );
