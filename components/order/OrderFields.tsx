@@ -17,9 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Gift, MapPin, Truck, User } from "lucide-react"; // no animated version
-import { UserIcon } from "@/components/ui/user";
-import { TruckIcon } from "@/components/ui/truck";
-import { MapPinIcon } from "@/components/ui/map-pin";
 import type { OrderFormData } from "./types";
 import { todayLK } from "./types";
 

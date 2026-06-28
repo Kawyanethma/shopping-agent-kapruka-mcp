@@ -15,12 +15,10 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Loader2,
   Send,
 } from "lucide-react";
 // lucide-animated icons
 import { BotIcon } from "@/components/ui/bot";
-import { SendIcon } from "@/components/ui/send";
 import { SearchIcon } from "@/components/ui/search";
 import { ZapIcon } from "@/components/ui/zap";
 import { TruckIcon } from "@/components/ui/truck";
@@ -33,6 +31,7 @@ import { OrderConfirmationCard } from "@/components/order/OrderConfirmationCard"
 import type { OrderResult } from "@/components/order/types";
 import { GithubIcon } from "@/components/ui/github";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type GeminiHistory = { role: "user" | "model"; parts: { text: string }[] };
@@ -406,43 +405,48 @@ const ChatInput = memo(function ChatInput({
     if (!trimmed || disabled) return;
     onSend(trimmed);
     setValue("");
-    textareaRef.current?.focus();
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.focus();
+    }
   }, [value, disabled, onSend]);
 
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setValue(e.target.value);
+    const el = e.target;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  };
+
   return (
-    <Card>
-      <CardContent className="pt-3 pb-3">
-        <div className="flex gap-2 items-end">
-          <textarea
-            ref={textareaRef}
-            rows={2}
-            className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-            placeholder="Ask anything — 'Show me cakes', 'Deliver to Kandy?', 'Track VIMP34456'…"
-            value={value}
-            disabled={disabled}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-          />
-          <Button
-            size="icon"
-            className="h-10 w-10 shrink-0"
-            disabled={!value.trim() || disabled}
-            onClick={handleSend}
-          >
-            {disabled ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-          </Button>
-        </div>
-        <p className="text-[11px] text-muted-foreground mt-1.5">
-          <kbd className="px-1 py-0.5 rounded bg-muted border text-[10px]">
+    <div
+      className={cn(
+        "rounded-2xl border border-border bg-card",
+        "transition-shadow duration-150",
+        "focus-within:ring-3 focus-within:ring-ring/20 focus-within:border-ring",
+        disabled && "opacity-60 pointer-events-none",
+      )}
+    >
+      <textarea
+        ref={textareaRef}
+        rows={2}
+        style={{ minHeight: "52px", maxHeight: "160px" }}
+        className="w-full resize-none bg-transparent px-4 pt-3.5 pb-2 text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed"
+        placeholder="Ask anything — 'Show me cakes', 'Deliver to Kandy?', 'Track VIMP34456'..."
+        value={value}
+        disabled={disabled}
+        onChange={handleChange}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+          }
+        }}
+      />
+
+      <div className="flex items-center justify-between border-t border-border px-3 py-2">
+        <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 rounded bg-muted border text-[10px] font-mono">
             Enter
           </kbd>{" "}
           to send ·{" "}
@@ -451,11 +455,32 @@ const ChatInput = memo(function ChatInput({
           </kbd>{" "}
           for newline
         </p>
-      </CardContent>
-    </Card>
+
+        <Button
+          size="icon"
+          className="h-8 w-8 rounded-[10px] shrink-0"
+          disabled={!value.trim() || disabled}
+          onClick={handleSend}
+          aria-label={disabled ? "Sending…" : "Send message"}
+        >
+          {disabled ? (
+            <span className="flex gap-0.75 items-center">
+              {[0, 150, 300].map((delay) => (
+                <span
+                  key={delay}
+                  className="w-1 h-1 rounded-full bg-primary-foreground animate-bounce"
+                  style={{ animationDelay: `${delay}ms` }}
+                />
+              ))}
+            </span>
+          ) : (
+            <Send className="w-3.5 h-3.5" />
+          )}
+        </Button>
+      </div>
+    </div>
   );
 });
-
 // ─── Quick actions – call MCP directly (no Gemini, no API credits) ────────────
 const QUICK_ACTIONS = [
   {
@@ -705,7 +730,19 @@ export function ChatShoppingPage() {
         // Extract the JSON text from MCP's content wrapper
         const text =
           outer.result?.content?.find((c) => c.type === "text")?.text ?? "{}";
-        const data = JSON.parse(text) as Record<string, unknown>;
+        
+        let data: Record<string, unknown>;
+        try {
+          data = JSON.parse(text) as Record<string, unknown>;
+        } catch {
+          data = {
+            _mcpError: true,
+            message: text || "No results returned from Kapruka.",
+            results: [],
+            categories: [],
+            cities: [],
+          };
+        }
 
         const products =
           toolName === "kapruka_search_products"
@@ -715,7 +752,9 @@ export function ChatShoppingPage() {
         const toolResults: ToolResult[] = [{ toolName, data }];
 
         const replyContent =
-          toolName === "kapruka_search_products"
+          data._mcpError
+            ? (data.message as string)
+            : toolName === "kapruka_search_products"
             ? `${products?.length ?? 0} result${(products?.length ?? 0) !== 1 ? "s" : ""} for "${label}":`
             : `Information for "${label}":`;
 
@@ -800,7 +839,7 @@ export function ChatShoppingPage() {
       </div>
 
       {/* ── Bottom panel ── */}
-      <div className="shrink-0 border-t bg-background">
+      <div className="shrink-0 bg-background">
         <div className="max-w-4xl mx-auto px-4 pt-3 pb-4 space-y-2">
           {/* Quick actions (MCP direct – no Gemini credits) */}
           <div className="flex flex-wrap gap-1.5">

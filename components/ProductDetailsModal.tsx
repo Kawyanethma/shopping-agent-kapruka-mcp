@@ -42,7 +42,7 @@ export function ProductDetailsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b">
+        <div className="px-6 pt-6 ">
           <DialogHeader>
             <DialogTitle className="text-xl leading-snug">
               {product.name}
@@ -51,87 +51,84 @@ export function ProductDetailsModal({
           </DialogHeader>
         </div>
 
-        <div className="px-6 py-5 space-y-5">
+        <div className="px-6 py-5 space-y-5 overflow-y-auto">
           {/* Image */}
-          <div className="w-full bg-muted rounded-xl overflow-hidden aspect-[16/9]">
-            {product.image_url ? (
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
-                No image available
-              </div>
-            )}
-          </div>
-
-          {/* Description */}
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {product.summary}
-          </p>
-
-          <Separator />
-
-          {/* Price */}
-          <div className="flex items-end gap-3">
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Price</p>
-              <p className="text-3xl font-bold text-primary">
-                {product.price.currency}{" "}
-                {product.price.amount.toLocaleString("en-US", {
-                  maximumFractionDigits: 0,
-                })}
-              </p>
-            </div>
-            {product.compare_at_price && (
-              <p className="text-sm text-muted-foreground line-through mb-1">
-                {product.compare_at_price.amount.toLocaleString("en-US", {
-                  maximumFractionDigits: 0,
-                })}
-              </p>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* Stock + shipping */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Stock
-              </p>
-              <Badge
-                variant="outline"
-                className={
-                  product.in_stock
-                    ? "bg-green-50 text-green-700 border-green-200 gap-1"
-                    : "bg-red-50 text-red-700 border-red-200"
-                }
-              >
-                {product.in_stock && <CheckCircle2 className="w-3 h-3" />}
-                {product.in_stock ? "In Stock" : "Out of Stock"}
-              </Badge>
-              <p className="text-xs text-muted-foreground capitalize">
-                {product.stock_level} stock level
-              </p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Shipping
-              </p>
-              {product.ships_internationally ? (
-                <Badge className="bg-blue-50 text-blue-700 border-blue-200 border gap-1">
-                  <Truck className="w-3 h-3" /> Ships Worldwide
-                </Badge>
+          <div className="w-full flex flex-row gap-4">
+            <div className="w-1/2 bg-muted rounded-xl overflow-hidden aspect-square">
+              {product.image_url ? (
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <Badge variant="outline">Local Delivery Only</Badge>
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                  No image available
+                </div>
               )}
             </div>
-          </div>
 
-          <Separator />
+            <div className="w-1/2 flex flex-col gap-4">
+              <div className="flex items-end gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Price</p>
+                  <p className="text-3xl font-bold text-primary">
+                    {product.price.currency}{" "}
+                    {product.price.amount.toLocaleString("en-US", {
+                      maximumFractionDigits: 0,
+                    })}
+                  </p>
+                </div>
+                {product.compare_at_price && (
+                  <p className="text-sm text-muted-foreground line-through mb-1">
+                    {product.compare_at_price.amount.toLocaleString("en-US", {
+                      maximumFractionDigits: 0,
+                    })}
+                  </p>
+                )}
+              </div>
+              
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {product.summary}
+              </p>
+              <Separator />
+    
+              {/* Stock + shipping */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Stock
+                  </p>
+                  <Badge
+                    variant="outline"
+                    className={
+                      product.in_stock
+                        ? "bg-green-50 text-green-700 border-green-200 gap-1"
+                        : "bg-red-50 text-red-700 border-red-200"
+                    }
+                  >
+                    {product.in_stock && <CheckCircle2 className="w-3 h-3" />}
+                    {product.in_stock ? "In Stock" : "Out of Stock"}
+                  </Badge>
+                  <p className="text-xs text-muted-foreground capitalize">
+                    {product.stock_level} stock level
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Shipping
+                  </p>
+                  {product.ships_internationally ? (
+                    <Badge className="bg-blue-50 text-blue-700 border-blue-200 border gap-1">
+                      <Truck className="w-3 h-3" /> Ships Worldwide
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline">Local Delivery Only</Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="space-y-3">
             <div className="flex items-start gap-3">

@@ -71,14 +71,14 @@ export function ProductCard({
   };
 
   return (
-    <Card className="flex flex-col overflow-hidden hover:shadow-md transition-shadow duration-200">
+    <Card className="flex flex-col overflow-hidden hover:shadow-md transition-shadow duration-200 pt-0">
       {/* ── Image — fixed height so all cards align ── */}
-      <div className="relative w-full h-44 shrink-0 overflow-hidden bg-muted">
+      <div className="relative w-full h-56 shrink-0 overflow-hidden bg-muted -mt-0">
         {product.image_url ? (
           <img
             src={product.image_url}
             alt={product.name}
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-fill hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
@@ -99,10 +99,11 @@ export function ProductCard({
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="absolute top-2 left-2 p-1.5 rounded-lg bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-colors"
+          className="absolute top-2 left-2 p-1.5 rounded-lg bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-colors flex items-center"
           title="View on Kapruka.com"
         >
           <ExternalLink className="w-3 h-3 text-foreground" />
+          <span className="text-[10px] ml-1">View on Kapruka.com</span>
         </a>
       </div>
 
@@ -147,7 +148,7 @@ export function ProductCard({
               variant="outline"
               className="text-[10px] px-1.5 bg-blue-50 text-blue-700 border-blue-200"
             >
-              Ships int&apos;l
+              Ships Internationally
             </Badge>
           )}
         </div>
