@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Raleway, Noto_Sans } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
 
 const notoSans = Noto_Sans({subsets:['latin'],variable:'--font-sans'});
 
@@ -40,6 +41,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <Toaster position="bottom-right" theme="system" />
         </ThemeProvider>
       </body>
     </html>

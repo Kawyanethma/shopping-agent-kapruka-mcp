@@ -77,12 +77,12 @@ export function KaprukaBuddyFeaturesDialog() {
         {/* ── Sticky header ── */}
         <div className="shrink-0 border-b px-6 py-5 bg-muted/30">
           <div className="flex items-start gap-4 motion-preset-shrink">
-            <div className="w-15 h-15 rounded-2xl flex items-center justify-center shrink-0  ">
+            <div className="w-18 h-18 rounded-2xl flex items-center justify-center shrink-0  ">
                 <Image
-                  src={`/animated-logo.gif?v=${renderTime}`}
+                  src={`/animated-logo-buddy.gif?v=${renderTime}`}
                   alt="Kapruka Buddy"
-                  height={60}
-                  width={60}
+                  height={120}
+                  width={120}
                   unoptimized
                 />
             </div>
