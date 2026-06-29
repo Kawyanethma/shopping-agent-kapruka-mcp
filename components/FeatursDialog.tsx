@@ -13,13 +13,12 @@ import { Separator } from "@/components/ui/separator";
 import {
   Languages,
   PackageCheck,
-  LayoutGrid,
   Gift,
   Check,
   Zap,
   ImagePlus,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import {  useState } from "react";
 import Image from "next/image";
 
 const FEATURES = [
@@ -62,9 +61,7 @@ export function KaprukaBuddyFeaturesDialog() {
       setRenderTime(Date.now());
     }
   };
-  useEffect(() => {
-    console.log(open);
-  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger

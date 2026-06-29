@@ -27,6 +27,7 @@ import {
   validateOrderForm,
   submitOrder,
   tomorrowLK,
+  stepValidation,
   type OrderFormData,
   type OrderResult,
 } from "./types";
@@ -61,21 +62,7 @@ const STEPS = [
   { label: "Sender", shortLabel: "Sender" },
 ];
 
-function stepValidation(step: number, data: OrderFormData): string | null {
-  if (step === 2) {
-    if (!data.recipientName.trim()) return "Recipient name is required.";
-    if (!data.recipientPhone.trim()) return "Recipient phone is required.";
-  }
-  if (step === 3) {
-    if (!data.address.trim()) return "Delivery address is required.";
-    if (!data.city.trim()) return "Delivery city is required.";
-    if (!data.deliveryDate) return "Delivery date is required.";
-  }
-  if (step === 4) {
-    if (!data.senderName.trim()) return "Your name (sender) is required.";
-  }
-  return null;
-}
+
 
 export function OrderFormDialog({
   product,

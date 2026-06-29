@@ -985,6 +985,13 @@ export function ChatShoppingPage() {
       behavior: "smooth",
       block: "center",
     });
+    if (
+      messages[messages.length - 1].orderResult ||
+      messages[messages.length - 1].content ===
+        "Sure! Fill in the delivery details below and I’ll create an order for you."
+    ) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
   const handleScroll = (e: UIEvent<HTMLDivElement>) => {

@@ -38,17 +38,29 @@ export function todayLK(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Colombo" });
 }
 
+export function stepValidation(step: number, data: OrderFormData): string | null {
+  if (step === 2) {
+    if (!data.recipientName.trim()) return "Recipient name is required.";
+    const phone = data.recipientPhone.replace(/[\s-]/g, "");
+    if (!phone) return "Recipient phone is required.";
+    if (!/^(?:\+94|0)\d{9}$/.test(phone)) return "Valid phone number required (e.g. 0771234567 or +94771234567).";
+  }
+  if (step === 3) {
+    if (!data.address.trim()) return "Delivery address is required.";
+    if (!data.city.trim()) return "Delivery city is required.";
+    if (!data.deliveryDate) return "Delivery date is required.";
+    if (data.deliveryDate < todayLK()) return "Delivery date cannot be in the past.";
+  }
+  if (step === 4) {
+    if (!data.senderName.trim()) return "Your name (sender) is required.";
+  }
+  return null;
+}
+
 export function validateOrderForm(
   data: OrderFormData,
 ): string | null {
-  if (!data.recipientName.trim()) return "Recipient name is required.";
-  if (!data.recipientPhone.trim()) return "Recipient phone number is required.";
-  if (!data.address.trim()) return "Delivery address is required.";
-  if (!data.city.trim()) return "Delivery city is required.";
-  if (!data.deliveryDate) return "Delivery date is required.";
-  if (data.deliveryDate < todayLK()) return "Delivery date cannot be in the past.";
-  if (!data.senderName.trim()) return "Sender name is required.";
-  return null;
+  return stepValidation(2, data) || stepValidation(3, data) || stepValidation(4, data);
 }
 
 export async function submitOrder(

@@ -16,7 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Gift, MapPin, Truck, User } from "lucide-react"; // no animated version
+import { Gift, MapPin, Truck, User, CalendarIcon } from "lucide-react"; // no animated version
+import { format, parse } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { OrderFormData } from "./types";
 import { todayLK } from "./types";
 
@@ -198,12 +207,45 @@ export function DeliveryFields({
       </div>
 
       <FieldRow label="Delivery date" required>
-        <Input
-          type="date"
-          min={todayLK()}
-          value={data.deliveryDate}
-          onChange={(e) => onChange("deliveryDate", e.target.value)}
-        />
+        <Popover>
+          <PopoverTrigger 
+            render={
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !data.deliveryDate && "text-muted-foreground"
+                )}
+              />
+            }
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {data.deliveryDate ? (
+              format(parse(data.deliveryDate, "yyyy-MM-dd", new Date()), "PPP")
+            ) : (
+              <span>Pick a date</span>
+            )}
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="single"
+              selected={
+                data.deliveryDate
+                  ? parse(data.deliveryDate, "yyyy-MM-dd", new Date())
+                  : undefined
+              }
+              onSelect={(date) => {
+                if (date) {
+                  onChange("deliveryDate", format(date, "yyyy-MM-dd"));
+                }
+              }}
+              disabled={(date) => {
+                const todayStr = todayLK();
+                return format(date, "yyyy-MM-dd") < todayStr;
+              }}
+            />
+          </PopoverContent>
+        </Popover>
       </FieldRow>
 
       <FieldRow label="Delivery instructions">
