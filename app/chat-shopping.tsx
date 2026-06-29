@@ -34,7 +34,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import ShinyText from "@/components/ui/shiny-text";
 import Image from "next/image";
-import { KaprukaBuddyFeaturesDialog } from "@/components/order/FeatursDialog";
+import { KaprukaBuddyFeaturesDialog } from "@/components/FeatursDialog";
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type GeminiHistory = { role: "user" | "model"; parts: { text: string }[] };
