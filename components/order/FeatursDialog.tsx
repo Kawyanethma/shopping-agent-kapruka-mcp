@@ -21,11 +21,6 @@ import {
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
-type Props = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-};
-
 const FEATURES = [
   {
     icon: Languages,
@@ -123,7 +118,7 @@ export function KaprukaBuddyFeaturesDialog() {
                     <h4 className="text-sm font-semibold flex items-center gap-2">
                       {feature.title}
                       {feature.badge && (
-                        <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider">
+                        <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 text-[10px] font-bold uppercase tracking-wider">
                           {feature.badge}
                         </span>
                       )}
