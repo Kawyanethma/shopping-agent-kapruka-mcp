@@ -304,17 +304,17 @@ const MessageRow = memo(function MessageRow({
       {/* Bubble */}
       {(msg.content || msg.isLoading) && (
         <div
-          className={`flex items-start gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+          className={`flex items-start gap-0 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
         >
           {msg.role === "assistant" && (
             <div
-              className={`w-7 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 motion-preset-pop`}
+              className={`w-15 h-15 rounded-full flex items-center justify-center shrink-0 mt-0.5 motion-preset-pop`}
             >
               <Image
-                src={msg.isLoading ? "/buddy-loading.png" : "/buddy.png"}
+                src="/buddy-chat.png"
                 alt="Kapruka Buddy"
-                height={40}
-                width={40}
+                height={100}
+                width={100}
               />
             </div>
           )}
