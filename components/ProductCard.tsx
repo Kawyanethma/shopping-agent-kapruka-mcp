@@ -108,16 +108,16 @@ export function ProductCard({
       </div>
 
       {/* ── Content ── */}
-      <CardHeader className="px-3 pt-3 pb-0">
+      <CardHeader className="px-3 pb-0">
         <CardDescription className="text-[10px] font-semibold text-primary uppercase tracking-wide">
           {product.category.name}
         </CardDescription>
-        <CardTitle className="line-clamp-2 text-sm font-semibold leading-snug mt-0.5">
+        <CardTitle className="line-clamp-2 text-sm font-semibold leading-snug">
           {product.name}
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="px-3 pt-2 pb-0 flex-1">
+      <CardContent className="px-3 pb-0 flex-1 -mt-2">
         {/* Price */}
         <div className="flex items-baseline gap-1.5">
           <span className="text-base font-bold text-primary">
@@ -155,7 +155,7 @@ export function ProductCard({
       </CardContent>
 
       {/* ── Actions ── */}
-      <CardFooter className="px-3 pt-3 pb-3 flex-col gap-1.5">
+      <CardFooter className="px-3 flex-col gap-1.5 -mb-2">
         {/* View details */}
         <Button
           size="sm"

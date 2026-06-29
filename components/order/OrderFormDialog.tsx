@@ -165,17 +165,17 @@ export function OrderFormDialog({
               <img
                 src={product.image_url}
                 alt={product.name}
-                className="w-12 h-12 object-cover rounded-xl shrink-0"
+                className="w-18 h-18 object-cover rounded-xl shrink-0"
               />
             ) : (
               <div className="w-12 h-12 rounded-xl bg-muted shrink-0" />
             )}
             <div className="min-w-0">
               <DialogHeader className="space-y-0">
-                <DialogTitle className="text-base leading-snug line-clamp-1">
+                <DialogTitle className="text-base leading-snug line-clamp-2 w-[95%]">
                   {product.name}
                 </DialogTitle>
-                <DialogDescription className="text-primary font-bold text-sm mt-0.5">
+                <DialogDescription className="text-primary font-bold text-md mt-0.5">
                   {product.price.currency}{" "}
                   {product.price.amount.toLocaleString()}
                 </DialogDescription>

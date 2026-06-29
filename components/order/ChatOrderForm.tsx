@@ -132,21 +132,21 @@ export function ChatOrderForm({ product, onOrderCreated, onDismiss }: Props) {
   return (
     <Card className="border shadow-md overflow-hidden">
       {/* ── Product bar ── */}
-      <div className="flex items-center gap-3 px-4 pt-3 pb-3 border-b bg-muted/30">
+      <div className="flex items-center gap-3 px-4 -mt-5 p-4 border-b bg-muted/30">
         {product.image_url ? (
           <img
             src={product.image_url}
             alt={product.name}
-            className="w-10 h-10 object-cover rounded-lg shrink-0"
+            className="w-14 h-14 object-cover rounded-lg shrink-0"
           />
         ) : (
           <div className="w-10 h-10 rounded-lg bg-muted shrink-0" />
         )}
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold line-clamp-1 leading-tight">
+          <p className="text-sm font-semibold line-clamp-1 leading-tight">
             {product.name}
           </p>
-          <p className="text-xs text-primary font-bold mt-0.5">
+          <p className="text-sm text-primary font-bold mt-0.5">
             {product.price.currency} {product.price.amount.toLocaleString()}
           </p>
         </div>
@@ -223,11 +223,11 @@ export function ChatOrderForm({ product, onOrderCreated, onDismiss }: Props) {
 
         <Separator />
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 -mb-4">
           {step > 1 ? (
             <Button
               variant="outline"
-              size="sm"
+              size="lg"
               className="flex-1 gap-1"
               onClick={handleBack}
               disabled={loading}
@@ -237,7 +237,7 @@ export function ChatOrderForm({ product, onOrderCreated, onDismiss }: Props) {
           ) : (
             <Button
               variant="outline"
-              size="sm"
+              size='lg'
               className="flex-1"
               onClick={onDismiss}
               disabled={loading}
@@ -247,12 +247,12 @@ export function ChatOrderForm({ product, onOrderCreated, onDismiss }: Props) {
           )}
 
           {step < 4 ? (
-            <Button size="sm" className="flex-1 gap-1" onClick={handleNext}>
+            <Button size="lg" className="flex-1 gap-1" onClick={handleNext}>
               Next <ChevronRight className="w-3.5 h-3.5" />
             </Button>
           ) : (
             <Button
-              size="sm"
+              size="lg"
               className="flex-1 gap-1.5"
               onClick={handleSubmit}
               disabled={loading}

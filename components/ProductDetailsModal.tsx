@@ -44,10 +44,12 @@ export function ProductDetailsModal({
         {/* Header */}
         <div className="px-6 pt-6 ">
           <DialogHeader>
+            <DialogDescription className="text-xs">
+              <Badge variant="default">{product.category.name}</Badge>
+            </DialogDescription>
             <DialogTitle className="text-xl leading-snug">
               {product.name}
             </DialogTitle>
-            <DialogDescription>{product.category.name}</DialogDescription>
           </DialogHeader>
         </div>
 
@@ -87,12 +89,12 @@ export function ProductDetailsModal({
                   </p>
                 )}
               </div>
-              
+
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {product.summary}
               </p>
               <Separator />
-    
+
               {/* Stock + shipping */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -107,7 +109,7 @@ export function ProductDetailsModal({
                         : "bg-red-50 text-red-700 border-red-200"
                     }
                   >
-                    {product.in_stock && <CheckCircle2 className="w-3 h-3" />}
+                    {product.in_stock && <CheckCircle2 className="w-4 h-4" />}
                     {product.in_stock ? "In Stock" : "Out of Stock"}
                   </Badge>
                   <p className="text-xs text-muted-foreground capitalize">
@@ -119,8 +121,8 @@ export function ProductDetailsModal({
                     Shipping
                   </p>
                   {product.ships_internationally ? (
-                    <Badge className="bg-blue-50 text-blue-700 border-blue-200 border gap-1">
-                      <Truck className="w-3 h-3" /> Ships Worldwide
+                    <Badge className="bg-sky-50 text-sky-700 border-sky-200 border gap-1">
+                      <Truck className="w-4 h-4" /> Ships Worldwide
                     </Badge>
                   ) : (
                     <Badge variant="outline">Local Delivery Only</Badge>
@@ -132,7 +134,7 @@ export function ProductDetailsModal({
 
           <div className="space-y-3">
             <div className="flex items-start gap-3">
-              <Package className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+              <Package className="w-5 h-8 text-primary mt-0.5 shrink-0" />
               <div>
                 <p className="font-medium text-sm">Reliable Packaging</p>
                 <p className="text-xs text-muted-foreground">
@@ -141,7 +143,7 @@ export function ProductDetailsModal({
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Truck className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+              <Truck className="w-5 h-8 text-primary mt-0.5 shrink-0" />
               <div>
                 <p className="font-medium text-sm">Fast Delivery</p>
                 <p className="text-xs text-muted-foreground">

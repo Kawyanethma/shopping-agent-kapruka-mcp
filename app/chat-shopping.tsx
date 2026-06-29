@@ -15,7 +15,11 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
+  ClockIcon,
   Send,
+  Cake,
+  Flower2,
+  Gift,
 } from "lucide-react";
 // lucide-animated icons
 import { BotIcon } from "@/components/ui/bot";
@@ -23,7 +27,6 @@ import { SearchIcon } from "@/components/ui/search";
 import { ZapIcon } from "@/components/ui/zap";
 import { TruckIcon } from "@/components/ui/truck";
 import { MapPinIcon } from "@/components/ui/map-pin";
-import { ClockIcon } from "@/components/ui/clock";
 import { LoaderCircleIcon } from "@/components/ui/loader-circle";
 import { OrderFormDialog } from "@/components/order/OrderFormDialog";
 import { ChatOrderForm } from "@/components/order/ChatOrderForm";
@@ -32,6 +35,8 @@ import type { OrderResult } from "@/components/order/types";
 import { GithubIcon } from "@/components/ui/github";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import ShinyText from "@/components/ui/shiny-text";
+import Image from "next/image";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type GeminiHistory = { role: "user" | "model"; parts: { text: string }[] };
@@ -302,8 +307,13 @@ const MessageRow = memo(function MessageRow({
           className={`flex items-start gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
         >
           {msg.role === "assistant" && (
-            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-              <BotIcon size={14} className="text-primary" />
+            <div className={`w-7 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 motion-preset-pop`}>
+              <Image
+                src={msg.isLoading ? '/buddy-loading.png' : '/buddy.png'}
+                alt="Kapruka Buddy"
+                height={40}
+                width={40}
+              />
             </div>
           )}
           <div
@@ -316,7 +326,7 @@ const MessageRow = memo(function MessageRow({
             {msg.isLoading ? (
               <span className="flex items-center gap-2 text-muted-foreground">
                 <LoaderCircleIcon size={14} className="animate-spin" />
-                Thinking…
+                <ShinyText text="Thinking..." />
               </span>
             ) : (
               <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -484,19 +494,19 @@ const ChatInput = memo(function ChatInput({
 // ─── Quick actions – call MCP directly (no Gemini, no API credits) ────────────
 const QUICK_ACTIONS = [
   {
-    icon: <SearchIcon size={14} />,
+    icon: <Cake size={14} />,
     label: "Birthday cakes",
     toolName: "kapruka_search_products",
     params: { q: "birthday cake", limit: 12 },
   },
   {
-    icon: <SearchIcon size={14} />,
+    icon: <Flower2 size={14} />,
     label: "Flowers",
     toolName: "kapruka_search_products",
     params: { q: "flowers", limit: 12 },
   },
   {
-    icon: <SearchIcon size={14} />,
+    icon: <Gift size={14} />,
     label: "Chocolates",
     toolName: "kapruka_search_products",
     params: { q: "chocolates", limit: 12 },
@@ -730,7 +740,7 @@ export function ChatShoppingPage() {
         // Extract the JSON text from MCP's content wrapper
         const text =
           outer.result?.content?.find((c) => c.type === "text")?.text ?? "{}";
-        
+
         let data: Record<string, unknown>;
         try {
           data = JSON.parse(text) as Record<string, unknown>;
@@ -751,10 +761,9 @@ export function ChatShoppingPage() {
 
         const toolResults: ToolResult[] = [{ toolName, data }];
 
-        const replyContent =
-          data._mcpError
-            ? (data.message as string)
-            : toolName === "kapruka_search_products"
+        const replyContent = data._mcpError
+          ? (data.message as string)
+          : toolName === "kapruka_search_products"
             ? `${products?.length ?? 0} result${(products?.length ?? 0) !== 1 ? "s" : ""} for "${label}":`
             : `Information for "${label}":`;
 
@@ -795,10 +804,15 @@ export function ChatShoppingPage() {
       {/* ── Header ── */}
       <header className="border-b shrink-0 bg-background/95 backdrop-blur z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <ZapIcon size={20} className="text-primary" />
+          <div className="flex items-center gap-2 motion-preset-shrink ">
+            <Image
+              src="/buddy-logo.png"
+              alt="Kapruka Buddy"
+              height={30}
+              width={30}
+            />
             <div>
-              <p className="text-sm font-bold leading-none">K-Shopping Agent</p>
+              <p className="text-sm font-bold leading-none">Kapruka Buddy</p>
               <p className="text-[10px] text-muted-foreground leading-none mt-0.5">
                 powered by Kapruka MCP
               </p>
