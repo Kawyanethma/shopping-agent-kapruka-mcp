@@ -21,10 +21,6 @@ import {
   Flower2,
   Gift,
 } from "lucide-react";
-// lucide-animated icons
-import { BotIcon } from "@/components/ui/bot";
-import { SearchIcon } from "@/components/ui/search";
-import { ZapIcon } from "@/components/ui/zap";
 import { TruckIcon } from "@/components/ui/truck";
 import { MapPinIcon } from "@/components/ui/map-pin";
 import { LoaderCircleIcon } from "@/components/ui/loader-circle";
@@ -308,9 +304,11 @@ const MessageRow = memo(function MessageRow({
           className={`flex items-start gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
         >
           {msg.role === "assistant" && (
-            <div className={`w-7 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 motion-preset-pop`}>
+            <div
+              className={`w-7 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 motion-preset-pop`}
+            >
               <Image
-                src={msg.isLoading ? '/buddy-loading.png' : '/buddy.png'}
+                src={msg.isLoading ? "/buddy-loading.png" : "/buddy.png"}
                 alt="Kapruka Buddy"
                 height={40}
                 width={40}
@@ -539,13 +537,13 @@ export function ChatShoppingPage() {
       id: "welcome",
       role: "assistant",
       content:
-        "Hi! I'm K-Shopping Agent, powered by Kapruka MCP.\n\n" +
-        "Try asking:\n" +
-        "  Show me birthday cakes under LKR 6000\n" +
-        "  What categories do you have?\n" +
-        "  Can you deliver to Galle?\n" +
-        "  Track order VIMP34456CB2\n\n" +
-        "Or use the quick-action buttons below.",
+        "Ayubowan & welcome! 👋 Kapruka Buddy here. \nLet's get your Kapruka orders sorted out, no stress. 💯\n\n" +
+        "Try asking me:\n" +
+        "  • Birthday cakes under LKR 6000 🎂\n" +
+        "  • Browse categories 👀\n" +
+        "  • Can you deliver to Galle?\n" +
+        "  • Track order VIMPXXXXXX 📦\n\n" +
+        "Or use the quick-action buttons below to pass the vibe check.",
     },
   ]);
   const [geminiHistory, setGeminiHistory] = useState<GeminiHistory[]>([]);
@@ -814,8 +812,8 @@ export function ChatShoppingPage() {
               unoptimized
             />
             <div>
-              <p className="text-sm font-bold leading-none">Kapruka Buddy</p>
-              <p className="text-[10px] text-muted-foreground leading-none mt-0.5">
+              <p className="text-md font-bold leading-none">Kapruka Buddy</p>
+              <p className="text-xs text-muted-foreground leading-none mt-1">
                 powered by Kapruka MCP
               </p>
             </div>
@@ -826,7 +824,7 @@ export function ChatShoppingPage() {
               href="https://github.com/Kawyanethma/shopping-agent-kapruka-mcp"
               className="text-sm text-muted-foreground hover:text-primary"
             >
-              <Button size='icon-lg' variant="ghost">
+              <Button size="icon-lg" variant="ghost">
                 <GithubIcon />
               </Button>
             </Link>
