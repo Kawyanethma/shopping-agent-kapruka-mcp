@@ -22,7 +22,7 @@ import {
   ArrowDown,
   Mic,
   X,
-  ImagePlus
+  ImagePlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TruckIcon } from "@/components/ui/truck";
@@ -38,7 +38,6 @@ import { cn } from "@/lib/utils";
 import ShinyText from "@/components/ui/shiny-text";
 import Image from "next/image";
 import { KaprukaBuddyFeaturesDialog } from "@/components/FeatursDialog";
-
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type GeminiHistory = { role: "user" | "model"; parts: { text: string }[] };
@@ -428,8 +427,8 @@ const ChatInput = memo(function ChatInput({
   const hasSpokenRef = useRef(false);
 
   const unlockSpeechAPI = useCallback(() => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      const silentUtterance = new SpeechSynthesisUtterance('');
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      const silentUtterance = new SpeechSynthesisUtterance("");
       silentUtterance.volume = 0;
       window.speechSynthesis.speak(silentUtterance);
     }
@@ -445,7 +444,14 @@ const ChatInput = memo(function ChatInput({
       textareaRef.current.style.height = "auto";
       textareaRef.current.focus();
     }
-  }, [value, disabled, isProcessingAudio, isUploadingImage, onSend, unlockSpeechAPI]);
+  }, [
+    value,
+    disabled,
+    isProcessingAudio,
+    isUploadingImage,
+    onSend,
+    unlockSpeechAPI,
+  ]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isListening) {
@@ -458,66 +464,80 @@ const ChatInput = memo(function ChatInput({
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       // Use webm for chrome/firefox, mp4 for safari
-      const mimeType = typeof window !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm') 
-        ? 'audio/webm' 
-        : 'audio/mp4';
-      
+      const mimeType =
+        typeof window !== "undefined" &&
+        MediaRecorder.isTypeSupported("audio/webm")
+          ? "audio/webm"
+          : "audio/mp4";
+
       // --- Silence Detection ---
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioContext = new (
+        window.AudioContext || (window as any).webkitAudioContext
+      )();
       const analyser = audioContext.createAnalyser();
       const microphone = audioContext.createMediaStreamSource(stream);
       microphone.connect(analyser);
       analyser.fftSize = 256;
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      
+
       let silenceStart = Date.now();
       hasSpokenRef.current = false;
 
       const checkSilence = () => {
-        if (!mediaRecorderRef.current || mediaRecorderRef.current.state === "inactive") {
+        if (
+          !mediaRecorderRef.current ||
+          mediaRecorderRef.current.state === "inactive"
+        ) {
           audioContext.close().catch(() => {});
           return;
         }
-        
+
         analyser.getByteTimeDomainData(dataArray);
-        
+
         let sumSquares = 0;
         for (let i = 0; i < dataArray.length; i++) {
           const normalized = (dataArray[i] - 128) / 128;
           sumSquares += normalized * normalized;
         }
         const rms = Math.sqrt(sumSquares / dataArray.length);
-        
+
         // --- Reactivity ---
         // Sound waves scaling based on RMS volume and time
         const voiceScale = rms * 40;
-        const bars = document.querySelectorAll('.sound-wave-bar');
+        const bars = document.querySelectorAll(".sound-wave-bar");
         const time = Date.now() / 200;
         bars.forEach((el, i) => {
-           const wave = Math.sin(time + i * 0.8) * 0.5 + 0.5; // 0 to 1
-           const layerScale = 1 + (voiceScale * (0.5 + wave * 1.5));
-           (el as HTMLElement).style.transform = `scaleY(${Math.min(layerScale, 6)})`;
+          const wave = Math.sin(time + i * 0.8) * 0.5 + 0.5; // 0 to 1
+          const layerScale = 1 + voiceScale * (0.5 + wave * 1.5);
+          (el as HTMLElement).style.transform =
+            `scaleY(${Math.min(layerScale, 6)})`;
         });
-        
+
         // Typical background noise RMS < 0.01. Speech is > 0.03.
         if (rms > 0.02) {
           hasSpokenRef.current = true;
           silenceStart = Date.now();
         } else {
           // Auto submit after 1.5s of silence (if spoken), or cancel after 6s of complete silence
-          if ((hasSpokenRef.current && Date.now() - silenceStart > 1500) || (!hasSpokenRef.current && Date.now() - silenceStart > 6000)) {
-             if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-                 mediaRecorderRef.current.stop();
-                 setIsListening(false);
-             }
-             audioContext.close().catch(() => {});
-             return;
+          if (
+            (hasSpokenRef.current && Date.now() - silenceStart > 1500) ||
+            (!hasSpokenRef.current && Date.now() - silenceStart > 6000)
+          ) {
+            if (
+              mediaRecorderRef.current &&
+              mediaRecorderRef.current.state === "recording"
+            ) {
+              mediaRecorderRef.current.stop();
+              setIsListening(false);
+            }
+            audioContext.close().catch(() => {});
+            return;
           }
         }
         requestAnimationFrame(checkSilence);
       };
       // ------------------------
-      
+
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -531,33 +551,33 @@ const ChatInput = memo(function ChatInput({
       mediaRecorder.onstop = async () => {
         setIsProcessingAudio(true);
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-        
+
         // Stop all tracks to release microphone
         stream.getTracks().forEach((track) => track.stop());
 
         // Completely ignore if the user didn't say anything
         if (!hasSpokenRef.current) {
-           setIsProcessingAudio(false);
-           return;
+          setIsProcessingAudio(false);
+          return;
         }
 
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
         reader.onloadend = async () => {
-          const base64Audio = (reader.result as string).split(',')[1];
+          const base64Audio = (reader.result as string).split(",")[1];
           try {
-            const res = await fetch('/api/transcribe', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+            const res = await fetch("/api/transcribe", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ audio: base64Audio, mimeType }),
             });
             const data = await res.json();
             if (data.text) {
-               setValue(data.text);
-               onSend(data.text, true);
-               setValue("");
+              setValue(data.text);
+              onSend(data.text, true);
+              setValue("");
             }
-          } catch(e) {
+          } catch (e) {
             console.error(e);
             toast.error("Error transcribing audio");
           } finally {
@@ -584,51 +604,54 @@ const ChatInput = memo(function ChatInput({
     }
   }, [isListening, startRecording, stopRecording, unlockSpeechAPI]);
 
-  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    setIsUploadingImage(true);
-    
-    try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        const mimeType = file.type;
-        const base64Data = base64.split(',')[1];
-        
-        try {
-          const response = await fetch('/api/vision', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: base64Data, mimeType }),
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            if (data.text) {
-              onSend("Find me " + data.text, false);
+  const handleImageUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      setIsUploadingImage(true);
+
+      try {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = async () => {
+          const base64 = reader.result as string;
+          const mimeType = file.type;
+          const base64Data = base64.split(",")[1];
+
+          try {
+            const response = await fetch("/api/vision", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ image: base64Data, mimeType }),
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data.text) {
+                onSend("Find me " + data.text, false);
+              }
+            } else {
+              console.error("Vision API failed:", await response.text());
+              toast.error("Sorry, could not process the image.");
             }
-          } else {
-            console.error("Vision API failed:", await response.text());
-            toast.error("Sorry, could not process the image.");
+          } catch (err) {
+            console.error(err);
+            toast.error("Error processing image.");
+          } finally {
+            setIsUploadingImage(false);
+            if (fileInputRef.current) {
+              fileInputRef.current.value = "";
+            }
           }
-        } catch(err) {
-          console.error(err);
-          toast.error("Error processing image.");
-        } finally {
-          setIsUploadingImage(false);
-          if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-          }
-        }
-      };
-    } catch(err) {
-      console.error(err);
-      setIsUploadingImage(false);
-    }
-  }, [onSend]);
+        };
+      } catch (err) {
+        console.error(err);
+        setIsUploadingImage(false);
+      }
+    },
+    [onSend],
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(e.target.value);
@@ -643,7 +666,8 @@ const ChatInput = memo(function ChatInput({
         "relative rounded-2xl border border-border bg-card overflow-hidden",
         "transition-shadow duration-150",
         "focus-within:ring-3 focus-within:ring-ring/20 focus-within:border-ring",
-        (disabled || isProcessingAudio || isUploadingImage) && "opacity-60 pointer-events-none",
+        (disabled || isProcessingAudio || isUploadingImage) &&
+          "opacity-60 pointer-events-none",
       )}
     >
       <style>{`
@@ -664,47 +688,60 @@ const ChatInput = memo(function ChatInput({
           box-shadow: 0 0 10px rgba(68, 42, 115, 0.5);
         }
       `}</style>
-      
+
       {(isListening || isProcessingAudio || isUploadingImage) && (
         <div className="absolute top-0 left-0 right-0 bottom-12 z-20 flex flex-col items-center justify-center bg-card/70 backdrop-blur-xl">
-           <div className="relative flex items-center justify-center h-20">
-             {isListening && (
+          <div className="relative flex items-center justify-center h-20">
+            {isListening && (
               <div className="sound-wave-container">
-               <div className="sound-wave-bar" />
-               <div className="sound-wave-bar" />
-               <div className="sound-wave-bar" />
-               <div className="sound-wave-bar" />
-               <div className="sound-wave-bar" />
-               <div className="sound-wave-bar" />
-               <div className="sound-wave-bar" />
-             </div>
-             )}
-           </div>
-           <p className="mt-3 text-xs font-medium text-foreground/80 tracking-wide animate-pulse">
-             {isListening ? "Listening..." : isUploadingImage ? "Analyzing image..." : "Transcribing..."}
-           </p>
-           {(isProcessingAudio || isUploadingImage) && (
-             <Button
-               variant="ghost"
-               size="sm"
-               className="h-6 px-2 mt-1 rounded-full text-[10px] bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20"
-               onClick={() => {
-                 stopRecording();
-                 setIsProcessingAudio(false);
-                 setIsUploadingImage(false);
-               }}
-             >
-               <X className="w-3 h-3 mr-1" /> Cancel
-             </Button>
-           )}
+                <div className="sound-wave-bar" />
+                <div className="sound-wave-bar" />
+                <div className="sound-wave-bar" />
+                <div className="sound-wave-bar" />
+                <div className="sound-wave-bar" />
+                <div className="sound-wave-bar" />
+                <div className="sound-wave-bar" />
+              </div>
+            )}
+          </div>
+          <p className="mt-3 text-xs font-medium text-foreground/80 tracking-wide animate-pulse">
+            {isListening
+              ? "Listening..."
+              : isUploadingImage
+                ? "Analyzing image..."
+                : "Transcribing..."}
+          </p>
+          {(isProcessingAudio || isUploadingImage) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 mt-1 rounded-full text-[10px] bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20"
+              onClick={() => {
+                stopRecording();
+                setIsProcessingAudio(false);
+                setIsUploadingImage(false);
+              }}
+            >
+              <X className="w-3 h-3 mr-1" /> Cancel
+            </Button>
+          )}
         </div>
       )}
       <textarea
         ref={textareaRef}
         rows={2}
         style={{ minHeight: "52px", maxHeight: "160px" }}
-        className={cn("w-full resize-none bg-transparent px-4 pt-3.5 pb-2 text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed", (isListening || isProcessingAudio || isUploadingImage) && "opacity-0")}
-        placeholder={isUploadingImage ? "Analyzing image..." : isProcessingAudio ? "Transcribing..." : "Ask anything — 'Show me cakes', 'Deliver to Kandy?', 'Track VIMP34456'..."}
+        className={cn(
+          "w-full resize-none bg-transparent px-4 pt-3.5 pb-2 text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed",
+          (isListening || isProcessingAudio || isUploadingImage) && "opacity-0",
+        )}
+        placeholder={
+          isUploadingImage
+            ? "Analyzing image..."
+            : isProcessingAudio
+              ? "Transcribing..."
+              : "Ask anything — 'Show me cakes', 'Deliver to Kandy?', 'Track VIMP34456'..."
+        }
         value={value}
         disabled={disabled || isProcessingAudio || isUploadingImage}
         onChange={handleChange}
@@ -719,11 +756,11 @@ const ChatInput = memo(function ChatInput({
       <div className="flex items-center justify-between border-t border-border px-3 py-2">
         <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
           <kbd className="px-1.5 py-0.5 rounded bg-muted border text-[10px] font-mono">
-            Enter
+            ⏎
           </kbd>{" "}
           to send ·{" "}
           <kbd className="px-1 py-0.5 rounded bg-muted border text-[10px]">
-            Shift+Enter
+            ⇧ + ⏎
           </kbd>{" "}
           for newline
         </p>
@@ -741,12 +778,12 @@ const ChatInput = memo(function ChatInput({
             </span>
           ) : (
             <>
-              <input 
-                type="file" 
-                accept="image/*" 
-                className="hidden" 
-                ref={fileInputRef} 
-                onChange={handleImageUpload} 
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
               />
               <Button
                 size="icon"
@@ -770,7 +807,8 @@ const ChatInput = memo(function ChatInput({
                   variant={isListening ? "default" : "ghost"}
                   className={cn(
                     "relative z-10 h-8 w-8 rounded-[10px] shrink-0 transition-all duration-300",
-                    isListening && "bg-linear-to-br from-[#f9dc09] to-[#442a73] text-white hover:opacity-90 border-0 scale-110 shadow-lg ring-2 ring-white/20",
+                    isListening &&
+                      "bg-linear-to-br from-[#f9dc09] to-[#442a73] text-white hover:opacity-90 border-0 scale-110 shadow-lg ring-2 ring-white/20",
                   )}
                   onClick={() => {
                     if (isListening) {
@@ -779,7 +817,11 @@ const ChatInput = memo(function ChatInput({
                       toggleListening();
                     }
                   }}
-                  title={isListening ? "Listening... click to stop and search" : "Speak to search / chat (Auto-detects EN/SI/TA)"}
+                  title={
+                    isListening
+                      ? "Listening... click to stop and search"
+                      : "Speak to search / chat (Auto-detects EN/SI/TA)"
+                  }
                   disabled={disabled}
                 >
                   {isListening ? (
@@ -795,7 +837,9 @@ const ChatInput = memo(function ChatInput({
           <Button
             size="icon"
             className="h-8 w-8 rounded-[10px] shrink-0"
-            disabled={!value.trim() || disabled || isProcessingAudio || isUploadingImage}
+            disabled={
+              !value.trim() || disabled || isProcessingAudio || isUploadingImage
+            }
             onClick={handleSend}
             aria-label={disabled ? "Sending…" : "Send message"}
           >
@@ -859,11 +903,7 @@ const QUICK_ACTIONS = [
 ];
 
 // ─── Speak text helper using Gemini TTS API ────────────────────────────────────
-const speakText = async (
-  text: string,
-  onStart?: () => void,
-  onFinish?: () => void
-) => {
+const speakText = async (text: string) => {
   if (typeof window === "undefined") return;
 
   const cleanText = text
@@ -882,15 +922,15 @@ const speakText = async (
     (window as any).currentAudio.pause();
   }
 
-  if (onStart) onStart();
+  const toastId = toast.loading("Generating voice...");
 
   try {
-    const res = await fetch('/api/tts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: cleanText }),
     });
-    
+
     if (res.ok) {
       const data = await res.json();
       if (data.audio) {
@@ -898,14 +938,15 @@ const speakText = async (
         const audio = new window.Audio(audioSrc);
         (window as any).currentAudio = audio;
         audio.play().catch(console.error);
+        toast.dismiss(toastId);
         return; // Success!
       }
     }
+    throw new Error("TTS generation failed");
   } catch (err) {
     console.error("TTS API error:", err);
+    toast.dismiss(toastId);
     toast.error("Could not play audio.");
-  } finally {
-    if (onFinish) onFinish();
   }
 };
 
@@ -927,7 +968,6 @@ export function ChatShoppingPage() {
   ]);
   const [geminiHistory, setGeminiHistory] = useState<GeminiHistory[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isGeneratingTTS, setIsGeneratingTTS] = useState(false);
   // Details modal
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -1089,24 +1129,23 @@ export function ChatShoppingPage() {
         if (isVoice) {
           let spokenText = replyText;
           if (!spokenText && toolResults && toolResults.length > 0) {
-             const toolName = toolResults[0].toolName;
-             if (toolName === "kapruka_search_products") {
-                const count = products?.length ?? 0;
-                spokenText = count > 0 ? `I found ${count} options for you.` : "I couldn't find any items for that search.";
-             } else if (toolName === "kapruka_check_delivery") {
-                spokenText = "Here are the delivery details you requested.";
-             } else if (toolName === "kapruka_track_order") {
-                spokenText = "Here is the latest tracking update for your order.";
-             } else {
-                spokenText = "Here is the information I found.";
-             }
+            const toolName = toolResults[0].toolName;
+            if (toolName === "kapruka_search_products") {
+              const count = products?.length ?? 0;
+              spokenText =
+                count > 0
+                  ? `I found ${count} options for you.`
+                  : "I couldn't find any items for that search.";
+            } else if (toolName === "kapruka_check_delivery") {
+              spokenText = "Here are the delivery details you requested.";
+            } else if (toolName === "kapruka_track_order") {
+              spokenText = "Here is the latest tracking update for your order.";
+            } else {
+              spokenText = "Here is the information I found.";
+            }
           }
           if (spokenText) {
-            speakText(
-              spokenText,
-              () => setIsGeneratingTTS(true),
-              () => setIsGeneratingTTS(false)
-            );
+            speakText(spokenText);
           }
         }
       } catch (err) {
@@ -1267,7 +1306,7 @@ export function ChatShoppingPage() {
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 motion-preset-shrink ">
             <Image
-              src="/animated-logo-buddy.gif"
+              src="/animated-logo.gif"
               alt="Kapruka Buddy"
               height={45}
               width={45}
@@ -1318,16 +1357,6 @@ export function ChatShoppingPage() {
               onDismissChatOrder={handleDismissChatOrder}
             />
           ))}
-          {isGeneratingTTS && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground ml-12 py-2 animate-in fade-in slide-in-from-bottom-2">
-               <span className="flex gap-1 items-center">
-                 {[0, 150, 300].map((delay) => (
-                   <span key={delay} className="w-1.5 h-1.5 rounded-full bg-[#f9dc09] animate-bounce" style={{ animationDelay: `${delay}ms` }} />
-                 ))}
-               </span>
-               Synthesizing voice response...
-            </div>
-          )}
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -1338,10 +1367,7 @@ export function ChatShoppingPage() {
             : "opacity-0 translate-y-4 pointer-events-none"
         }`}
       >
-        <Button
-          size="icon-lg"
-          onClick={handleMessagesEnd}
-        >
+        <Button size="icon-lg" onClick={handleMessagesEnd}>
           <ArrowDown className="motion-preset-oscillate motion-duration-1500" />
         </Button>
       </div>

@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kapruka Buddy 🛍️🤖
 
-## Getting Started
+Kapruka Buddy is an intelligent, voice-activated shopping assistant for Kapruka.com, Sri Lanka's largest e-commerce platform. Built with Next.js, Shadcn UI, and powered by Gemini AI via MCP (Model Context Protocol).
 
-First, run the development server:
+## ✨ Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 🎙️ Intelligent Voice Search & TTS
+- **Real-Time Voice Input:** Talk directly to the app using your microphone.
+- **Dynamic Mic Visualizer:** A stunning, reactive sound wave equalizer (Purple & Gold gradient) that dynamically scales and pulses based on your live audio volume (RMS).
+- **Silence Detection:** Automatically finishes recording and submits your query when you stop speaking.
+- **Voice Responses:** Native Gemini TTS (Text-to-Speech) reads out product availability, tracking updates, and assistance.
+- **Language Agnostic:** Seamlessly speak in English, Sinhala, or Tamil.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 📸 Visual AI Product Search
+- **Image Upload:** Upload a picture of a product (like a birthday cake, chocolate box, or flower bouquet).
+- **Gemini Vision Integration:** Utilizes Gemini Vision capabilities to automatically analyze the image, detect the main product, and instantly trigger a Kapruka product search within the chat flow!
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### ⚡ Quick Actions (No-LLM Mode)
+- One-click quick actions to instantly search for "Birthday cakes", "Flowers", "Colombo Delivery", or "Order Tracking" without wasting AI tokens, talking directly to the Kapruka MCP.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 💬 Smart AI Chat
+- Context-aware shopping AI that knows precisely when to invoke Kapruka tools (Search, Categories, Tracking, Delivery).
+- Rich UI responses with beautifully designed product cards.
+- **In-Chat Ordering:** Instantly generate an inline order form inside the chat flow.
 
-## Learn More
+### 🎨 Premium UI/UX
+- **Custom Theming:** Deep Purple (`#442a73`) and Gold (`#f9dc09`) brand color integration.
+- **Smooth Animations:** Bouncing loaders, micro-interactions, and beautiful transitions.
+- **Elegant Error Handling:** Clean, non-intrusive toast notifications powered by `Sonner`.
+- **Isolated Renders:** Highly optimized React architecture ensuring typing and recording doesn't re-render the heavy message list.
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Technology Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Framework:** [Next.js](https://nextjs.org/) (App Router)
+- **AI / LLMs:** Google Generative AI (Gemini Flash Lite & Vision APIs)
+- **UI Components:** [Shadcn UI](https://ui.shadcn.com/) (Tailwind CSS, Radix UI)
+- **Notifications:** Sonner (Toast)
+- **API Architecture:** MCP (Model Context Protocol) bridging Gemini function calling with Kapruka endpoints.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🚀 Getting Started
 
-## Deploy on Vercel
+1. **Clone the repository**
+2. **Install dependencies**
+   ```bash
+   pnpm install
+   ```
+3. **Set up Environment Variables**
+   Create a `.env.local` file and add your Gemini API Key:
+   ```env
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+4. **Run the development server**
+   ```bash
+   pnpm dev
+   ```
+5. **Open browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📁 Key Directories
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `/app/chat-shopping.tsx`: The primary AI Chat Interface housing the message list, voice visualization, image uploading, and API interactions.
+- `/app/api/chat/route.ts`: Serverless route bridging Gemini models, managing tool execution, and handling history.
+- `/app/api/vision/route.ts`: Endpoint processing base64 image uploads to generate intelligent search queries via Gemini Vision.
+- `/app/api/tts/route.ts`: Generates audio responses natively using Gemini TTS.

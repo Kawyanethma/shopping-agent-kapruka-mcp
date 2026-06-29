@@ -17,6 +17,7 @@ import {
   Gift,
   Check,
   Zap,
+  ImagePlus,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
@@ -24,22 +25,23 @@ import Image from "next/image";
 const FEATURES = [
   {
     icon: Languages,
-    title: "Sinhala Language Support",
+    title: "English, Sinhala & Tamil Support",
     description:
-      "Chat, search, and interact with Kapruka Buddy using Sinhala. We are continuously improving this feature!",
-    badge: "Beta",
+      "Chat, search, and interact with Kapruka Buddy using your preferred language seamlessly.",
+    badge: "beta",
+  },
+  {
+    icon: ImagePlus,
+    title: "Visual AI Search",
+    description:
+      "Upload a picture of a product (like a cake or flowers), and Gemini Vision will instantly find it in our store.",
+    badge: "New",
   },
   {
     icon: PackageCheck,
-    title: "Order Support & Tracking",
+    title: "Smart Shopping & Tracking",
     description:
-      "Easily track your deliveries, check order statuses, and get instant help with any of your existing Kapruka orders.",
-  },
-  {
-    icon: LayoutGrid,
-    title: "Category Browsing",
-    description:
-      "Looking for cakes, flowers, or electronics? Navigate through Kapruka's massive catalog instantly with guided browsing.",
+      "Instantly navigate Kapruka's massive catalog, check order statuses, and get delivery help.",
   },
   {
     icon: Gift,
@@ -79,7 +81,7 @@ export function KaprukaBuddyFeaturesDialog() {
           <div className="flex items-start gap-4 motion-preset-shrink">
             <div className="w-18 h-18 rounded-2xl flex items-center justify-center shrink-0  ">
                 <Image
-                  src={`/animated-logo-buddy.gif?v=${renderTime}`}
+                  src={`/animated-logo.gif?v=${renderTime}`}
                   alt="Kapruka Buddy"
                   height={120}
                   width={120}
