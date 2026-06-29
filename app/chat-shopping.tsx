@@ -37,6 +37,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import ShinyText from "@/components/ui/shiny-text";
 import Image from "next/image";
+import { KaprukaBuddyFeaturesDialog } from "@/components/order/FeatursDialog";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type GeminiHistory = { role: "user" | "model"; parts: { text: string }[] };
@@ -806,10 +807,11 @@ export function ChatShoppingPage() {
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 motion-preset-shrink ">
             <Image
-              src="/buddy-logo.png"
+              src="/animated-logo.gif"
               alt="Kapruka Buddy"
-              height={30}
-              width={30}
+              height={45}
+              width={45}
+              unoptimized
             />
             <div>
               <p className="text-sm font-bold leading-none">Kapruka Buddy</p>
@@ -818,16 +820,17 @@ export function ChatShoppingPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <ThemeToggle />
             <Link
               href="https://github.com/Kawyanethma/shopping-agent-kapruka-mcp"
               className="text-sm text-muted-foreground hover:text-primary"
             >
-              <Button variant="ghost">
+              <Button size='icon-lg' variant="ghost">
                 <GithubIcon />
               </Button>
             </Link>
+            <KaprukaBuddyFeaturesDialog />
           </div>
         </div>
       </header>

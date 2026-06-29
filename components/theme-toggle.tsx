@@ -28,13 +28,12 @@ export function ThemeToggle() {
 
   return (
     <Button
-      variant="outline"
-      size="sm"
+      variant='ghost'
+      size='icon-lg'
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className="gap-2"
     >
-      {isDark ? <SunMedium /> : <Moon />}
-      <span>{isDark ? "Light" : "Dark"}</span>
+      {isDark ? <SunMedium className="size-5" /> : <Moon className="size-4" />}
     </Button>
   );
 }
