@@ -26,7 +26,7 @@ const FEATURES = [
     icon: Languages,
     title: "English, Sinhala & Tamil Support",
     description:
-      "Chat, search, and interact with Kapruka Buddy using your preferred language seamlessly.",
+      "(Tanglish and Singlish also supported) Chat, search, and interact with Kapruka Buddy using your preferred language seamlessly.",
     badge: "beta",
   },
   {
