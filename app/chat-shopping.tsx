@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, UIEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import {
   Cake,
   Flower2,
   Gift,
+  ArrowDown,
 } from "lucide-react";
 import { TruckIcon } from "@/components/ui/truck";
 import { MapPinIcon } from "@/components/ui/map-pin";
@@ -288,6 +289,7 @@ const MessageRow = memo(function MessageRow({
   onOrderInChat,
   onChatOrderCreated,
   onDismissChatOrder,
+  messagesFocusRef,
 }: {
   msg: ChatMessage;
   onViewProduct: (p: Product) => void;
@@ -295,6 +297,7 @@ const MessageRow = memo(function MessageRow({
   onOrderInChat: (p: Product) => void;
   onChatOrderCreated: (result: OrderResult, msgId: string) => void;
   onDismissChatOrder: (msgId: string) => void;
+  messagesFocusRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   return (
     <div className="space-y-3">
@@ -328,12 +331,16 @@ const MessageRow = memo(function MessageRow({
                 <ShinyText text="Thinking..." />
               </span>
             ) : (
-              <p className="whitespace-pre-wrap">{msg.content}</p>
+              <p className="whitespace-pre-wrap">
+                {msg.content.toLowerCase().includes("error:")
+                  ? "Sorry, something went wrong."
+                  : msg.content}
+              </p>
             )}
           </div>
         </div>
       )}
-
+      <div ref={messagesFocusRef ?? undefined} />
       {/* Non-search tool result cards */}
       {!msg.isLoading &&
         msg.toolResults
@@ -555,12 +562,36 @@ export function ChatShoppingPage() {
   const [orderProduct, setOrderProduct] = useState<Product | null>(null);
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesFocusRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [isNotAtBottom, setIsNotAtBottom] = useState(false);
 
   // Auto-scroll when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesFocusRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
   }, [messages]);
+
+  const handleScroll = (e: UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+
+    // Calculate the distance from the bottom
+    const distanceFromBottom =
+      target.scrollHeight - target.scrollTop - target.clientHeight;
+
+    // If the distance is greater than 2px, they are not at the bottom
+    if (distanceFromBottom > 2) {
+      setIsNotAtBottom(true);
+    } else {
+      setIsNotAtBottom(false);
+    }
+  };
+
+  const handleMessagesEnd = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
 
   const handleViewProduct = useCallback((p: Product) => {
     setSelectedProduct(p);
@@ -760,11 +791,38 @@ export function ChatShoppingPage() {
 
         const toolResults: ToolResult[] = [{ toolName, data }];
 
-        const replyContent = data._mcpError
-          ? (data.message as string)
-          : toolName === "kapruka_search_products"
-            ? `${products?.length ?? 0} result${(products?.length ?? 0) !== 1 ? "s" : ""} for "${label}":`
-            : `Information for "${label}":`;
+        // ── Generate "Intelligent" Hardcoded Responses ───────
+        let replyContent = "";
+
+        if (data._mcpError) {
+          replyContent = `I'm sorry, I ran into a small issue: ${data.message as string}. Could you try again or use a different keyword?`;
+        } else {
+          switch (toolName) {
+            case "kapruka_search_products":
+              const count = products?.length ?? 0;
+              if (count === 0) {
+                replyContent = `I couldn't find any items for "${label}". Let's try searching with a different keyword!`;
+              } else {
+                replyContent = `I found ${count} great option${count !== 1 ? "s" : ""} for "${label}"! Here are the results for you. Click Order or Order in Chat on any card to proceed.`;
+              }
+              break;
+
+            case "kapruka_track_order":
+              replyContent = `Here is the latest tracking update for your order:`;
+              break;
+
+            case "kapruka_check_delivery":
+              replyContent = `Here are the delivery details you requested:`;
+              break;
+
+            case "kapruka_list_categories":
+              replyContent = `Here are all our categories! Let me know what catches your eye, and we can start searching.`;
+              break;
+
+            default:
+              replyContent = `Here is the information for "${label}":`;
+          }
+        }
 
         setMessages((prev) =>
           prev.map((m) =>
@@ -836,11 +894,18 @@ export function ChatShoppingPage() {
       {/* ── Scrollable message list ──
           Using a plain overflow-y-auto div instead of the Base-UI ScrollArea
           component, which was intercepting pointer events and blocking button clicks. */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto min-h-0"
+      >
         <div className="max-w-4xl mx-auto px-4 py-4 space-y-5 pb-2">
-          {messages.map((msg) => (
+          {messages.map((msg, index) => (
             <MessageRow
               key={msg.id}
+              messagesFocusRef={
+                index === messages.length - 2 ? messagesFocusRef : undefined
+              }
               msg={msg}
               onViewProduct={handleViewProduct}
               onOrderNow={handleOrderNow}
@@ -852,12 +917,25 @@ export function ChatShoppingPage() {
           <div ref={messagesEndRef} />
         </div>
       </div>
-
+      <div
+        className={`absolute z-10 bottom-45 left-1/2 -translate-x-1/2 transition-all duration-300 ease-in-out ${
+          isNotAtBottom
+            ? "opacity-100 translate-y-0 pointer-events-auto"
+            : "opacity-0 translate-y-4 pointer-events-none"
+        }`}
+      >
+        <Button
+          size="icon-lg"
+          onClick={handleMessagesEnd}
+        >
+          <ArrowDown className="motion-preset-oscillate motion-duration-1500" />
+        </Button>
+      </div>
       {/* ── Bottom panel ── */}
-      <div className="shrink-0 bg-background">
+      <div className="shrink-0 bg-background relative">
         <div className="max-w-4xl mx-auto px-4 pt-3 pb-4 space-y-2">
           {/* Quick actions (MCP direct – no Gemini credits) */}
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex gap-1.5 overflow-x-auto whitespace-nowrap scrollbar-width-none [&::-webkit-scrollbar]:hidden">
             {QUICK_ACTIONS.map(({ icon, label, toolName, params }) => (
               <Button
                 key={label}
